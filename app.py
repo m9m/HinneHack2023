@@ -32,7 +32,7 @@ app = Flask(__name__, static_folder="static")
 app.register_blueprint(ir)
 
 #basic settings
-app.testing = False
+app.testing = True
 superuser = ['']
 
 
@@ -45,10 +45,6 @@ flow = Flow.from_client_secrets_file(  #Flow is OAuth 2.0 a class that stores al
     scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],  #here we are specifing what do we get after the authorization
     redirect_uri="http://localhost:5000/auth/google/callback"  #and the redirect URI is the point where the user will end up after the authorization
 )
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.session_protection = "strong"
-app.config["DEBUG"] = True
 app.secret_key = insecure_data["app_key"]
 
 
@@ -85,16 +81,39 @@ db.init_app(app)
 def create_table():
     db.create_all()
 
-class City(db.Model):
-    __tablename__ = 'city'
-    name = db.Column(db.String(30), primary_key=True, unique=True)
+class LiveCities(db.Model):
+    __tablename__ = 'livecities'
+    city_name = db.Column(db.String(30), primary_key=True, unique=True)
+    live = db.Column(db.Boolean)
+
+    def __init__(self, city_name, live=False):
+        self.city_name = city_name
+        self.live = False
+    
+    def push_live(self):
+        self.live = True
+
+    def is_live(self):
+        return self.live
+
 
 class Petition(db.Model):
     __tablename__ = 'petition'
-    id = db.Column(db.String(30), primary_key=True, unique=True)
-    name = db.Column(db.String(30))
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    city_name = db.Column(db.String(30), unique=True)
+    name = db.Column(db.String(150))
     description = db.Text(db.Text)
     signatures = db.Column(db.Integer)
+
+    def __init__(self, name, desciption):
+        self.id = db.Column(db.Integer, primary_key=True, unique=True)
+        self.city_name = db.Column(db.String(30), unique=True)
+        self.name = name
+        self.description = desciption
+        self.signatures = 0
+
+
+
 
 # routes
 
@@ -158,28 +177,43 @@ def callback():
 
 @app.route('/communities/')
 def communities():
-    return redirect("communities_search")
+    return redirect(url_for("communities_search"))
 
-@app.route('/communities/search')
+@app.route('/communities/search', methods=["GET","POST"])
 def communities_search():
+    form1 = SearchCommunityForm()
     if request.method == "GET":
-        return render_template("search.html", form=SearchCommunityForm)
-    
+        return render_template("search.html", form=form1, message="")
+    name = request.form["city_name"]
+    searched_city = LiveCities.query.filter_by(city_name=name).first()
+    if not searched_city:
+        return render_template("search.html", form=form1, message="City not found. Please make sure the name is correct. Otherwise <a href=\"/communities/apply\">Apply for a city to be added</a>")
+    else:
+        return render_template("communities.html", community=searched_city)
 
-@app.route('/communities/apply')
+@app.route('/communities/apply',methods=["GET","POST"])
 def communities_apply():
+    form = ApplyCommunityForm()
     if request.method == "GET":
-        return redirect("application.html", form=ApplyCommunityForm)
-    
+        return render_template("application.html", form=form)
+    name = request.form["city_name"]
+    print(name)
+    if LiveCities.query.filter_by(city_name=name).first(): #exists
+        return render_template("application.html", form=form, message="This city has already been suggested! Hang tight!")
+    record = LiveCities(city_name=name)
+    db.session.add(record)
+    db.session.commit()
+    return render_template("application.html", form=form, message="Your application has been submitted to a site moderator and will be reviewed within the next 24h, hang tight while we create your community page!")
 
+@app.route('/communities/<name>',methods=["GET","POST"])
+def communities_view(name):
+    city = LiveCities.query.filter_by(city_name=name).first() #exists
+    if not city:
+        return 404
+    if not city.get_live():
+        return 404
+    return render_template("communities.html", city=city)
 
-
-
-
-
-@login_manager.unauthorized_handler
-def unauth_handler():
-    return redirect(url_for("login")), 302
 
 @app.errorhandler(429)
 def rate_limit(e):
