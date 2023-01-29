@@ -31,14 +31,6 @@ flow = Flow.from_client_secrets_file(  #Flow is OAuth 2.0 a class that stores al
 app.secret_key = insecure_data["app_key"]
 
 
-# define csrf protection
-WTF_CSRF_ENABLED = True
-WTF_CSRF_SECRET_KEY = insecure_data["csrf"]
-app.config['RECAPTCHA_PUBLIC_KEY'] = ""
-app.config['RECAPTCHA_PRIVATE_KEY'] = ""
-app.config['RECAPTCHA_DATA_ATTRS'] = {'theme': 'light'}
-
-
 # define forms
 class SearchCommunityForm(FlaskForm):
     city_name = StringField()
