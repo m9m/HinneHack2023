@@ -33,6 +33,7 @@ app.register_blueprint(ir)
 
 #basic settings
 app.testing = True
+app.debug=True
 superuser = ['']
 
 
@@ -84,26 +85,26 @@ def create_table():
 class LiveCities(db.Model):
     __tablename__ = 'livecities'
     city_name = db.Column(db.String(30), primary_key=True, unique=True)
-    live = db.Column(db.Boolean)
+    live = db.Column(db.Boolean(), default=False, nullable=False)
 
-    def __init__(self, city_name, live=False):
+    def __init__(self, city_name, live=True):
         self.city_name = city_name
-        self.live = False
+        self.live = live
     
     def push_live(self):
         self.live = True
 
-    def is_live(self):
+    def get_live(self):
         return self.live
-
 
 class Petition(db.Model):
     __tablename__ = 'petition'
     id = db.Column(db.Integer, primary_key=True, unique=True)
     city_name = db.Column(db.String(30), unique=True)
     name = db.Column(db.String(150))
-    description = db.Text(db.Text)
-    signatures = db.Column(db.Integer)
+    description = db.Text(db.Text())
+    signatures = db.Column(db.Integer())
+    columns = db.Column(db.PickleType())
 
     def __init__(self, name, desciption):
         self.id = db.Column(db.Integer, primary_key=True, unique=True)
@@ -111,6 +112,18 @@ class Petition(db.Model):
         self.name = name
         self.description = desciption
         self.signatures = 0
+        self.signers = []
+    
+    def modify_description(self, newdescription):
+        self.description = newdescription
+    
+    def sign(self, signer):
+        if signer in self.signers:
+            return False
+        else:
+            self.signatures += 1
+            self.signers.append(signer)
+            return True
 
 
 
@@ -181,15 +194,16 @@ def communities():
 
 @app.route('/communities/search', methods=["GET","POST"])
 def communities_search():
-    form1 = SearchCommunityForm()
+    form = SearchCommunityForm()
     if request.method == "GET":
-        return render_template("search.html", form=form1, message="")
+        return render_template("search.html", form=form, message="")
     name = request.form["city_name"]
     searched_city = LiveCities.query.filter_by(city_name=name).first()
     if not searched_city:
-        return render_template("search.html", form=form1, message="City not found. Please make sure the name is correct. Otherwise <a href=\"/communities/apply\">Apply for a city to be added</a>")
-    else:
-        return render_template("communities.html", community=searched_city)
+        return render_template("search.html", form=form, message="City not found. Please make sure the name is correct. Otherwise <a href=\"/communities/apply\">Apply for a city to be added</a>")
+    if not searched_city.get_live():
+        return render_template("application.html", form=form, message="This city has been suggested and is being reviewed, hang tight!")
+    return redirect(url_for("communities_view", name=name))
 
 @app.route('/communities/apply',methods=["GET","POST"])
 def communities_apply():
@@ -197,9 +211,12 @@ def communities_apply():
     if request.method == "GET":
         return render_template("application.html", form=form)
     name = request.form["city_name"]
-    print(name)
-    if LiveCities.query.filter_by(city_name=name).first(): #exists
-        return render_template("application.html", form=form, message="This city has already been suggested! Hang tight!")
+    city = LiveCities.query.filter_by(city_name=name).first()
+    if city: #exists
+        if city.get_live():
+            return redirect(url_for("communities_view", name=name))
+        else:
+            return render_template("application.html", form=form, message="This city has already been suggested! Hang tight!")
     record = LiveCities(city_name=name)
     db.session.add(record)
     db.session.commit()
@@ -209,10 +226,17 @@ def communities_apply():
 def communities_view(name):
     city = LiveCities.query.filter_by(city_name=name).first() #exists
     if not city:
-        return 404
+        return redirect(url_for("communities_search"))
     if not city.get_live():
-        return 404
-    return render_template("communities.html", city=city)
+        return redirect(url_for("communities_search"))
+    return render_template("communities.html", community=city)
+
+@app.route('/petitions/<id>',methods=["GET","POST"])
+def communities_view(id):
+    petition = Petition.query.filter_by(id=id).first() #exists
+    if not petition:
+        return "<html>No pet found</html>"
+    return render_template("petition.html", petition=petition)
 
 
 @app.errorhandler(429)
