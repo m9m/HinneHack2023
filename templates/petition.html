@@ -34,6 +34,7 @@
                 <br>
                 <p class="status"></p>
                 <div class="flex flex-row items-center align-center">
+                    <button class="text-2xl hover:underline hover:text-red-500 delete">Delete this petition</button>
                     <button class="px-5 text-2xl hover:underline hover:text-green-500 sign">Sign this petition</button>
                     <a href="{{url_for('communities_view', name=petition.city_name)}}" class="text-2xl hover:underline">Back to {{petition.city_name}}</a>
                 </div>
@@ -54,6 +55,22 @@
                 error: function () {
                     // /$(".delete").text("Delete This Server");
                         $(".status").text("Already signed.").show().css({"color":"red"});
+                    } //end error
+                },// end get
+            ) //end click
+            })
+            $(".delete").click(function () {
+            $.post({
+                url: "{{url_for('delete', id=petition.id)}}",
+                dataType: 'json',
+                data: jQuery.param({}),
+                success: function (res) {
+                    $(".status").text("Deleted!");
+                    var r = res;
+                    $(".status").text("Deleted!").show().css({"color":"red"});
+                }, //end success
+                error: function () {
+                        $(".status").text("Cannot be deleted").show().css({"color":"red"});
                     } //end error
                 },// end get
             ) //end click
