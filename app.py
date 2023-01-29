@@ -62,7 +62,7 @@ app.config['RECAPTCHA_DATA_ATTRS'] = {'theme': 'light'}
 
 #define forms
 class SearchCommunityForm(FlaskForm):
-    mainlocation = StringField()
+    city_name = StringField()
     submit = SubmitField()
 
 class ApplyCommunityForm(FlaskForm):
@@ -85,17 +85,19 @@ db.init_app(app)
 def create_table():
     db.create_all()
 
-class UserModel(UserMixin, db.Model):
-    __tablename__ = 'accounts'
-    email = db.Column(db.String(25), primary_key=True, unique=True)
+class City(db.Model):
+    __tablename__ = 'city'
+    name = db.Column(db.String(30), primary_key=True, unique=True)
 
+class Petition(db.Model):
+    __tablename__ = 'petition'
+    id = db.Column(db.String(30), primary_key=True, unique=True)
+    name = db.Column(db.String(30))
+    description = db.Text(db.Text)
+    signatures = db.Column(db.Integer)
 
-# set user loader for session cookie, links flask-login and sql database
-@login_manager.user_loader
-def load_user(primarykey):
-    return UserModel.query.get(primarykey)
+# routes
 
-#Pathways
 @app.route('/', methods=['GET'])
 def index(): 
     return redirect(url_for("home"))
@@ -160,11 +162,15 @@ def communities():
 
 @app.route('/communities/search')
 def communities_search():
-    return render_template("search.html")
+    if request.method == "GET":
+        return render_template("search.html", form=SearchCommunityForm)
+    
 
 @app.route('/communities/apply')
 def communities_apply():
-    return redirect("application.html")
+    if request.method == "GET":
+        return redirect("application.html", form=ApplyCommunityForm)
+    
 
 
 
