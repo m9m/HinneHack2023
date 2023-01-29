@@ -8,7 +8,15 @@
             <p class="status">{{ message if message else "" }}</p>
         </form>
         <p>
-            Active Petitions
+            My Petitions
         </p>
+        <ul>
+        {% for item in petition.query.filter_by(poster_id=session.get('google_id')).all() %}
+            <li>
+                <a href="{{url_for('petitions', id=item.id)}}">{{item.name}}</a>
+                <p>{{item.signatures}} signatures</p>
+            </li>
+        {% endfor %}
+        </ul>
     </body>
 </html>
