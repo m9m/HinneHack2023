@@ -1,22 +1,54 @@
 <html>
+    <head>
+        <link href="{{url_for('static', filename='stylesheets/home.css')}}" rel="stylesheet">
+        <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='favicon/favicon.ico')}}">
+        <title>Dashboard</title>
+    </head>
     <body>
-        <form id="submit" action="/dashboard" method="post">
-            {{form.city_name(type="select")}}
-            {{form.petition_name(placeholder="Enter a petition name", type="text")}}
-            {{form.petition_description(placeholder="Describe your idea", type="text")}}
-            {{form.submit}}
-            <p class="status">{{ message if message else "" }}</p>
-        </form>
-        <p>
-            My Petitions
-        </p>
-        <ul>
-        {% for item in petition.query.filter_by(poster_id=session.get('google_id')).all() %}
-            <li>
-                <a href="{{url_for('petitions', id=item.id)}}">{{item.name}}</a>
-                <p>{{item.signatures}} signatures</p>
-            </li>
-        {% endfor %}
-        </ul>
+        <div class="flex flex-col w-full h-full">
+            <nav class="w-5/6 mx-auto mt-5 text-2xl bg-gray-200 rounded-md shadow-lg z-5">
+                <ul class="flex flex-row justify-center px-3">
+                    <li class="p-2 mx-2 transition-colors duration-300 ease-in-out hover:bg-gray-300"><a href="{{url_for('home')}}">Home</a></li>
+                    <li class="p-2 mx-2 transition-colors duration-300 ease-in-out hover:bg-gray-300"><a href="{{url_for('communities')}}">Communities</a></li>
+                    <li class="p-2 mx-2 transition-colors duration-300 ease-in-out hover:bg-gray-300"><a href="{{url_for('dashboard')}}">Dashboard</a></li>
+                    <li class="flex flex-row p-2 mx-2 ">
+                        {% if session.get("google_id") %}
+                            <img src="{{session['profile_pic']}}" class="w-10 h-10 rounded-3xl">
+                            <a href="/logout" class="px-2 transition-colors duration-300 ease-in-out hover:bg-gray-300">Logout</a>
+                        {% else %}
+                            <a href="/login" class="transition-colors duration-300 ease-in-out hover:bg-gray-300">Login</a>
+                        {% endif %}
+                    </li>
+                </ul>
+            </nav>
+            <br>
+            <br>
+            
+            <div class="flex flex-col items-center justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
+                <h1 class="text-3xl">
+                    Create a Petition
+                </h1>
+                <form id="submit" action="/dashboard" method="post" class="flex flex-col w-5/6 gap-5 p-3 mx-auto align-center">
+                    {{form.city_name(type="select",class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                    {{form.petition_name(placeholder="Enter a petition name", type="text",class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                    {{form.petition_description(placeholder="Describe your idea", type="textarea", class="p-3 border-2 border-black rounded-md resize-none h-52 solid")}}
+                    {{form.submit(class="w-2/5 p-4 mx-auto border-2 border-black rounded-md hover:bg-gray-300 solid")}}
+                    <p class="text-xl status">{{ message if message else "" }}</p>
+                </form>
+            </div>
+            <div class="flex flex-col justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
+                <h1 class="text-lg">
+                    My Petitions
+                </h1>
+                <ul>
+                {% for item in petition.query.filter_by(poster_id=session.get('google_id')).all() %}
+                    <li>
+                        <a href="{{url_for('petitions', id=item.id)}}">{{item.name}}</a>
+                        <p>{{item.signatures}} signatures</p>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
     </body>
 </html>

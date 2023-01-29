@@ -1,10 +1,32 @@
 <html>
     <head>
-        <link href="{{url_for('static', filename='google_auth.png')}}" rel="stylesheet">
-        <title>Home</title>z
+        <link href="{{url_for('static', filename='stylesheets/home.css')}}" rel="stylesheet">
+        <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='favicon/favicon.ico')}}">
+        <title>Home</title>
     </head>
     <body>
-        <h1>Petition Hub</h1>
-        <h3><em>Make your Ideas to Improve your Local Community Come to Life</em></h3>
+        <div class="flex flex-col w-full h-full">
+            <nav class="w-5/6 mx-auto mt-5 text-2xl bg-gray-200 rounded-md shadow-lg z-5">
+                <ul class="flex flex-row justify-center px-3">
+                    <li class="p-2 mx-2 transition-colors duration-300 ease-in-out hover:bg-gray-300"><a href="{{url_for('home')}}">Home</a></li>
+                    <li class="p-2 mx-2 transition-colors duration-300 ease-in-out hover:bg-gray-300"><a href="{{url_for('communities')}}">Communities</a></li>
+                    <li class="p-2 mx-2 transition-colors duration-300 ease-in-out hover:bg-gray-300"><a href="{{url_for('dashboard')}}">Dashboard</a></li>
+                    <li class="flex flex-row p-2 mx-2 ">
+                        {% if session.get("google_id") %}
+                            <img src="{{session['profile_pic']}}" class="w-10 h-10 rounded-3xl">
+                            <a href="/logout" class="px-2 transition-colors duration-300 ease-in-out hover:bg-gray-300">Logout</a>
+                        {% else %}
+                            <a href="/login" class="transition-colors duration-300 ease-in-out hover:bg-gray-300">Login</a>
+                        {% endif %}
+                    </li>
+                </ul>
+            </nav>
+            <br>
+            <br>
+            <div class="flex flex-col justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
+                <h1 class="p-5 mx-auto text-4xl">CommunityCall <em>MN</em></h1>
+                <h3 class="mx-auto"><em>Improve and Connect with your Community Hassle-Free</em></h3>
+            </div>
+        </div>
     </body>
 </html>
