@@ -20,7 +20,8 @@ from pip._vendor import cachecontrol
 import google.auth.transport.requests
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired
-from wtforms import StringField, SubmitField
+from wtforms import StringField, SubmitField, SelectField
+from  sqlalchemy.ext.mutable import MutableList
 
 #blueprints
 from blueprints.index import route as ir
@@ -67,8 +68,9 @@ class ApplyCommunityForm(FlaskForm):
     submit = SubmitField()
 
 class CreatePetitionForm(FlaskForm):
+    city_name = SelectField()
     petition_name = StringField()
-    petition_data = StringField()
+    petition_description = StringField()
     submit = SubmitField()
 
 
@@ -81,6 +83,9 @@ db.init_app(app)
 @app.before_first_request
 def create_table():
     db.create_all()
+    if not LiveCities.query.filter_by(city_name="Minneapolis").first():
+        db.session.add(LiveCities("Minneapolis", True))
+    db.session.commit()
 
 class LiveCities(db.Model):
     __tablename__ = 'livecities'
@@ -99,16 +104,18 @@ class LiveCities(db.Model):
 
 class Petition(db.Model):
     __tablename__ = 'petition'
-    id = db.Column(db.Integer, primary_key=True, unique=True)
-    city_name = db.Column(db.String(30), unique=True)
+    id = db.Column(db.Integer(), primary_key=True, unique=True)
+    poster_id = db.Column(db.String(30), unique=True)
+    city_name = db.Column(db.String(30))
     name = db.Column(db.String(150))
-    description = db.Text(db.Text())
+    description = db.Column(db.Text())
     signatures = db.Column(db.Integer())
-    columns = db.Column(db.PickleType())
+    signers = db.Column(MutableList.as_mutable(db.PickleType))
 
-    def __init__(self, name, desciption):
-        self.id = db.Column(db.Integer, primary_key=True, unique=True)
-        self.city_name = db.Column(db.String(30), unique=True)
+    def __init__(self, id, poster_id, city_name, name, desciption):
+        self.id = id 
+        self.poster_id = poster_id
+        self.city_name = city_name
         self.name = name
         self.description = desciption
         self.signatures = 0
@@ -118,6 +125,7 @@ class Petition(db.Model):
         self.description = newdescription
     
     def sign(self, signer):
+        print(self.signers)
         if signer in self.signers:
             return False
         else:
@@ -139,9 +147,13 @@ def home():
     return redirect(url_for("login"))
 
 def check_oauth(function):  #a function to check if the user is authorized or not
+    @functools.wraps(function)
     def wrapper(*args, **kwargs):
-        if not session['google_id']:
-            return redirect(url_for("login"))
+        if not session.get("google_id"):
+            if request.method == "POST":
+                return {"Error":"Unuathenticated"}, 403
+            else:
+                return redirect(url_for("login")), 302
         else:
             return function()
     return wrapper
@@ -187,6 +199,31 @@ def callback():
     session["authenticated"] = True
     return redirect("/home")
 
+def create_id():
+    if len(db.session.query(Petition).all()) != 0:
+        return db.session.query(Petition).all()[-1].id+1
+    else:
+        return 0
+
+@app.route('/dashboard', methods=["GET","POST"])
+@check_oauth
+def dashboard():
+    form = CreatePetitionForm()
+    form.city_name.choices = [(q.city_name, q.city_name) for q in LiveCities.query.order_by('city_name')]
+    if request.method == "GET":
+        return render_template("dashboard.html", form=form, message="")
+    poster_id = session['google_id']
+    city_name = request.form['city_name']
+    petition_name = request.form["petition_name"]
+    petition_description = request.form["petition_description"]
+    print(Petition.query.filter_by(poster_id=poster_id).first())
+    if Petition.query.filter_by(poster_id=poster_id).first():
+        return render_template("dashboard.html", form=form, message="You already have a petition active.")
+    
+    record = Petition(create_id(), poster_id, city_name, petition_name, petition_description)
+    db.session.add(record)
+    db.session.commit()
+    return render_template("dashboard.html", form=form, message="Your petition is live! View it on the "+city_name+" page!")
 
 @app.route('/communities/')
 def communities():
@@ -220,7 +257,7 @@ def communities_apply():
     record = LiveCities(city_name=name)
     db.session.add(record)
     db.session.commit()
-    return render_template("application.html", form=form, message="Your application has been submitted to a site moderator and will be reviewed within the next 24h, hang tight while we create your community page!")
+    return render_template("application.html", form=form, message="Your application has b een submitted to a site moderator and will be reviewed within the next 24h, hang tight while we create your community page!")
 
 @app.route('/communities/<name>',methods=["GET","POST"])
 def communities_view(name):
@@ -229,14 +266,28 @@ def communities_view(name):
         return redirect(url_for("communities_search"))
     if not city.get_live():
         return redirect(url_for("communities_search"))
-    return render_template("communities.html", community=city)
+    return render_template("communities.html", community=city, petition=Petition)
 
 @app.route('/petitions/<id>',methods=["GET","POST"])
-def communities_view(id):
+def petitions(id):
     petition = Petition.query.filter_by(id=id).first() #exists
     if not petition:
         return "<html>No pet found</html>"
     return render_template("petition.html", petition=petition)
+
+
+@check_oauth
+@app.route('/petitions/<id>/sign',methods=["POST"])
+def sign(id):
+    petition = Petition.query.filter_by(id=id).first() #exists
+    if not petition:
+        return {"success":"false","message":"Petition id not found"}, 400
+    if petition.sign(session['google_id']):
+        db.session.commit()
+        return {"success":"true","message":"Petition signed!"}, 200
+    else:
+        return {"success":"false","message":"Petition already signed."}, 400
+        
 
 
 @app.errorhandler(429)
