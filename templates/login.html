@@ -1,8 +1,12 @@
 <html>
     <nav>
-        {{% if session.get("authenticated") %}}
-
-        {{%%endif}}
+        {% if session.get("authenticated") %}
+            <img src="{{session['profile_pic']}}">
+            <p>{{session['name']}}</p>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
     </nav>
     <a href="/auth/google">
          <img id="google"
