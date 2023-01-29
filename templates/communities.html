@@ -1,4 +1,13 @@
 <html>
+    <body>
     <h1>The Community of {{community.city_name}}, Minnesota</h1>
-    
+    <ul>
+        {% for item in petition.query.filter_by(city_name=community.city_name).all() %}
+            <li>
+                <a href="{{url_for('petitions', id=item.id)}}">{{item.name}}</a>
+                <p>{{item.signatures}} signatures</p>
+            </li>
+        {% endfor %}
+    </ul>
+    </body>
 </html>
