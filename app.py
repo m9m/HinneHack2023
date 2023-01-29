@@ -211,19 +211,17 @@ def dashboard():
     form = CreatePetitionForm()
     form.city_name.choices = [(q.city_name, q.city_name) for q in LiveCities.query.order_by('city_name')]
     if request.method == "GET":
-        return render_template("dashboard.html", form=form, message="")
+        return render_template("dashboard.html", form=form, message="", petition=Petition)
     poster_id = session['google_id']
     city_name = request.form['city_name']
     petition_name = request.form["petition_name"]
     petition_description = request.form["petition_description"]
-    print(Petition.query.filter_by(poster_id=poster_id).first())
     if Petition.query.filter_by(poster_id=poster_id).first():
-        return render_template("dashboard.html", form=form, message="You already have a petition active.")
-    
+        return render_template("dashboard.html", form=form, message="You already have a petition active.", petition=Petition)
     record = Petition(create_id(), poster_id, city_name, petition_name, petition_description)
     db.session.add(record)
     db.session.commit()
-    return render_template("dashboard.html", form=form, message="Your petition is live! View it on the "+city_name+" page!")
+    return render_template("dashboard.html", form=form, message="Your petition is live! View it on the "+city_name+" page!", petition=Petition)
 
 @app.route('/communities/')
 def communities():
