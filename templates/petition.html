@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    </head>
+    <body>
+        <a href="{{url_for('communities_view', name=petition.city_name)}}">Return To {{petition.city_name}}</a>
+        <h1>{{petition.name}}</h1>
+        <p>{{petition.description}}</p>
+        <button class="sign">Sign this petition</button>
+        <p class="status"></p>
+        <script>
+            $(".sign").click(function () {
+            $.post({
+                url: "{{url_for('sign', id=petition.id)}}",
+                dataType: 'json',
+                data: jQuery.param({}),
+                success: function (res) {
+                    $(".status").text("Signed!");
+                    var r = res;
+                    $(".status").text("Signed!").show().css({"color":"lime"});
+                }, //end success
+                error: function () {
+                    // /$(".delete").text("Delete This Server");
+                        $(".status").text("Already signed.").show().css({"color":"red"});
+                    } //end error
+                },// end get
+            ) //end click
+            })
+        </script>
+    </body>
+</html>
