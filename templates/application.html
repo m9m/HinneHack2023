@@ -1,0 +1,10 @@
+<html>
+    <body>
+        <form id="submit" action="/communities/apply" method="post">
+            {{form.city_name(placeholder="Enter a city name", type="text")}}
+            {{form.submit}}
+            <p class="status">{{ message if message else "" }}</p>
+            <a href="/communities/search">City Already Exists? Search.</a>
+        </form>
+    </body>
+</html>
