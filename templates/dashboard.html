@@ -23,17 +23,64 @@
             </nav>
             <br>
             <br>
-            
+            {% if session.get('admin') %}
+                <div class="flex flex-col items-center justify-center mx-auto bg-white border-2 border-orange-500 shadow-2xl solid my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
+                    <h1 class="text-3xl">
+                        Verify City Additions [ADMIN ONLY]
+                    </h1>
+                    {% for item in livecities.query.filter_by(live=False).all() %}
+                        <form id="submit" action="/dashboard" method="post" class="flex flex-row w-5/6 gap-5 p-3 mx-auto align-center">
+                            {{form2.form_n(value="2")}}
+                            {{form2.city_name(value=item.city_name, placeholder="Enter a city name", type="text",class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                            {{form2.confirm(type="checkbox",class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                            {{form2.submit(class="w-2/5 p-4 mx-auto border-2 border-black rounded-md hover:bg-gray-300 solid")}}
+                        </form>
+                    {% endfor %}
+                    <p class="text-xl">{{ message2 if message2 else "" }}</p>
+                </div>
+                <div class="flex flex-col items-center justify-center mx-auto bg-white border-2 border-orange-500 shadow-2xl solid my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
+                    <h1 class="text-3xl">
+                        Verify City Official Information [ADMIN ONLY]
+                    </h1>
+                    {% for item in livecities.query.all() %}
+                    {% if item.any_unverified() %}
+                        <form id="submit" action="/dashboard" method="post" class="flex flex-row w-5/6 gap-5 p-3 mx-auto align-center">
+                            {{form3.form_n(value="3")}}
+                            {{form3.city_name(value=item.city_name)}}
+                            <p class="text-xl">{{item.any_unverified()[0]}} {{item.any_unverified()[1]}} from {{item.city_name}}: {{item.any_unverified()[2]}}</p>
+                            {{form3.confirm(type="checkbox", class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                            {{form3.submit(class="w-2/5 p-4 mx-auto border-2 border-black rounded-md hover:bg-gray-300 solid")}}
+                        </form>
+                    {% endif %}
+                    {% endfor %}
+                    <p class="text-xl">{{ message3 if message3 else "" }}</p>
+                </div>
+            {% endif %}
             <div class="flex flex-col items-center justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
                 <h1 class="text-3xl">
                     Create a Petition
                 </h1>
                 <form id="submit" action="/dashboard" method="post" class="flex flex-col w-5/6 gap-5 p-3 mx-auto align-center">
+                    {{form.form_n(value="0")}}
                     {{form.city_name(type="select",class="p-3 border-2 border-black rounded-md resize-none solid")}}
                     {{form.petition_name(placeholder="Enter a petition name", type="text",class="p-3 border-2 border-black rounded-md resize-none solid")}}
                     {{form.petition_description(placeholder="Describe your idea", type="textarea", class="p-3 border-2 border-black rounded-md resize-none h-52 solid")}}
                     {{form.submit(class="w-2/5 p-4 mx-auto border-2 border-black rounded-md hover:bg-gray-300 solid")}}
                     <p class="text-xl status">{{ message if message else "" }}</p>
+                </form>
+            </div>
+            <div class="flex flex-col items-center justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
+                <h1 class="text-3xl">
+                    Add an Official's Information to your City
+                </h1>
+                <form id="submit" action="/dashboard" method="post" class="flex flex-col w-5/6 gap-5 p-3 mx-auto align-center">
+                    {{form1.form_n(value="1")}}
+                    {{form1.city_name(type="select",class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                    {{form1.title(placeholder="Title of local official", type="text", class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                    {{form1.name(placeholder="Name of local official", type="text",class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                    {{form1.contact(placeholder="Email of local official", type="text", class="p-3 border-2 border-black rounded-md resize-none solid")}}
+                    {{form1.submit(class="w-2/5 p-4 mx-auto border-2 border-black rounded-md hover:bg-gray-300 solid")}}
+                    <p class="text-xl status">{{ message1 if message1 else "" }}</p>
                 </form>
             </div>
             <div class="flex flex-col justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
