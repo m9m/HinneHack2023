@@ -1,0 +1,14 @@
+<html>
+    <body>
+        <form id="submit" action="/dashboard" method="post">
+            {{form.city_name(type="select")}}
+            {{form.petition_name(placeholder="Enter a petition name", type="text")}}
+            {{form.petition_description(placeholder="Describe your idea", type="text")}}
+            {{form.submit}}
+            <p class="status">{{ message if message else "" }}</p>
+        </form>
+        <p>
+            Active Petitions
+        </p>
+    </body>
+</html>
