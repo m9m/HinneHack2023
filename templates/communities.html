@@ -1,22 +1,8 @@
 <html>
-    <body>
-    
-    <ul>
-        {% for item in petition.query.filter_by(city_name=community.city_name).all() %}
-            <li>
-                <a href="{{url_for('petitions', id=item.id)}}">{{item.name}}</a>
-                <p>{{item.signatures}} signatures</p>
-            </li>
-        {% endfor %}
-    </ul>
-    </body>
-</html>
-
-<html>
     <head>
         <link href="{{url_for('static', filename='stylesheets/home.css')}}" rel="stylesheet">
         <link rel="icon" type="image/x-icon" href="{{url_for('static', filename='favicon/favicon.ico')}}">
-        <title>Dashboard</title>
+        <title>{{community.city_name}}</title>
     </head>
     <body>
         <div class="flex flex-col w-full h-full">
@@ -42,26 +28,32 @@
                 <h1 class="text-3xl">
                     The Community of {{community.city_name}}, Minnesota
                 </h1>
-                <form id="submit" action="/dashboard" method="post" class="flex flex-col w-5/6 gap-5 p-3 mx-auto align-center">
-                    {{form.city_name(type="select",class="p-3 border-2 border-black rounded-md resize-none solid")}}
-                    {{form.petition_name(placeholder="Enter a petition name", type="text",class="p-3 border-2 border-black rounded-md resize-none solid")}}
-                    {{form.petition_description(placeholder="Describe your idea", type="textarea", class="p-3 border-2 border-black rounded-md resize-none h-52 solid")}}
-                    {{form.submit(class="w-2/5 p-4 mx-auto border-2 border-black rounded-md hover:bg-gray-300 solid")}}
-                    <p class="text-xl status">{{ message if message else "" }}</p>
-                </form>
-            </div>
-            <div class="flex flex-col justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
-                <h1 class="text-lg">
-                    My Petitions
-                </h1>
+                <br>
+                <br>
+                <br>
                 <ul>
-                {% for item in petition.query.filter_by(poster_id=session.get('google_id')).all() %}
-                    <li>
-                        <a href="{{url_for('petitions', id=item.id)}}">{{item.name}}</a>
-                        <p>{{item.signatures}} signatures</p>
+                {% for item in officials if officials[item]["verified"] %}
+                    <li class="text-2xl">
+                        {{officials[item]["title"]}} - {{officials[item]["name"]}}: {{officials[item]["contact"]}}
                     </li>
+                    <br>
                 {% endfor %}
                 </ul>
+            </div>
+            <div class="flex flex-col justify-center mx-auto bg-white border-black border-solid shadow-2xl my-7 p-7 rounded-2xl sm:w-4/5 md:w-3/4 xl:w-1/2">
+                <h1 class="text-2xl">
+                    Popular Posts
+                </h1>
+                <br>
+                <ul class="flex flex-col justify-cent">
+                    {% for item in petition.query.filter_by(city_name=community.city_name).order_by('signatures')[:10] %}
+                        <li>
+                            <a href="{{url_for('petitions', id=item.id)}}">{{item.name}}</a>
+                            <p>{{item.signatures}} signatures</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="text-xl">Showing the Top 10 Most Active Posts</p>
             </div>
         </div>
     </body>
