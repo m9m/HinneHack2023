@@ -58,11 +58,22 @@ WTF_CSRF_SECRET_KEY = insecure_data["csrf"]
 app.config['RECAPTCHA_PUBLIC_KEY'] = ""
 app.config['RECAPTCHA_PRIVATE_KEY'] = ""
 app.config['RECAPTCHA_DATA_ATTRS'] = {'theme': 'light'}
-class RegisterForm(FlaskForm):
-    email = StringField()
-    password = StringField()
-    recaptcha = RecaptchaField()
+
+
+#define forms
+class SearchCommunityForm(FlaskForm):
+    mainlocation = StringField()
     submit = SubmitField()
+
+class ApplyCommunityForm(FlaskForm):
+    city_name = StringField()
+    submit = SubmitField()
+
+class CreatePetitionForm(FlaskForm):
+    petition_name = StringField()
+    petition_data = StringField()
+    submit = SubmitField()
+
 
 #Define database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -93,14 +104,23 @@ def index():
 def home(): 
     return redirect(url_for("login"))
 
+def check_oauth(function):  #a function to check if the user is authorized or not
+    def wrapper(*args, **kwargs):
+        if not session['google_id']:
+            return redirect(url_for("login"))
+        else:
+            return function()
+    return wrapper
+
+
 @app.route('/login', methods=['GET'])
 def login(): 
     return render_template("login.html")
 
 @app.route("/logout")
-@login_required
+@check_oauth
 def logout():
-    logout_user()
+    session.clear() #wipe server side session data
     return redirect(url_for("index"))
 
 @app.route('/auth/google')
