@@ -1,0 +1,12 @@
+<html>
+    <nav>
+        {{% if session.get("authenticated") %}}
+
+        {{%%endif}}
+    </nav>
+    <a href="/auth/google">
+         <img id="google"
+            src="{{url_for('static', filename='google_auth.png')}}"
+            alt="Google"> <br>
+    </a>
+</html>
